@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/xinmyname/SimpleJsonService</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/xinmyname/SimpleJsonService</RepositoryUrl>
+    <Description>Very simple JSON REST API Service for HttpListener and .NET Standard 2.0</Description>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/xinmyname/SimpleJsonService/master/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
 </Project>
