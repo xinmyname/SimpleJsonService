@@ -15,12 +15,13 @@ namespace SimpleJsonService
     {
         private readonly Uri _baseUri;
         private readonly object _controller;
+        private readonly bool _quiet;
         private readonly CancellationTokenSource _tokenSource;
         private readonly Task _task;
         private readonly HttpListener _listener;
         private readonly IDictionary<string, MethodInfo> _routes;
 
-        public JsonServiceHost(Uri baseUri, object controller)
+        public JsonServiceHost(Uri baseUri, object controller, bool quiet = false)
         {
             _baseUri = baseUri;
             _tokenSource = new CancellationTokenSource();
@@ -28,6 +29,7 @@ namespace SimpleJsonService
             _listener = new HttpListener();
             _listener.Prefixes.Add(baseUri.ToString());
             _controller = controller;
+            _quiet = quiet;
             _routes = new Dictionary<string, MethodInfo>();
 
             foreach (MethodInfo methodInfo in _controller.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
@@ -46,11 +48,13 @@ namespace SimpleJsonService
             _listener.Start();
             _task.Start();
 
-            Logger.Info($"Service started. Listening on: {_baseUri}");
-            Logger.Info("Actions:");
+            if (!_quiet)
+            {
+                Logger.Info($"Listening on {_baseUri}");
 
-            foreach (string action in _routes.Keys)
-                Logger.Info($"    {_routes[action].ToActionDescription()}");
+                foreach (string action in _routes.Keys)
+                    Logger.Info($"    {_routes[action].ToActionDescription()}");
+            }
         }
 
         public void Stop()
@@ -58,8 +62,6 @@ namespace SimpleJsonService
             _listener.Stop();
             _tokenSource.Cancel();
             _task.Wait();
-
-            Logger.Info("Service stopped.");
         }
 
         private async void Run()
