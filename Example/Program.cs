@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using SimpleJsonService;
 
 namespace Example
 {
-    class Program
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static void Main()
         {
             var tokenSource = new CancellationTokenSource();
 
@@ -16,12 +17,12 @@ namespace Example
                 e.Cancel = true;
             };
 
-            var serviceHost = new JsonServiceHost(new Uri("http://localhost:38080/"), new ExampleController());
+            var serviceHost = new JsonServiceHost<ExampleController>("http://localhost:38080/", AuthenticationSchemes.Negotiate);
 
             try
             {
                 serviceHost.Start();
-                Task.Delay(-1).Wait(tokenSource.Token);
+                Task.Delay(-1, tokenSource.Token).Wait(tokenSource.Token);
             }
             catch (OperationCanceledException)
             {

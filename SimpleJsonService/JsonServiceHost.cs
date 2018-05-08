@@ -11,28 +11,43 @@ using System.Threading.Tasks;
 
 namespace SimpleJsonService
 {
-    public class JsonServiceHost
+    public interface IHostAJsonService
+    {
+        void Start();
+        void Stop();
+    }
+
+    public interface INeedTheListenerContext
+    {
+        HttpListenerContext Context { get; set; }
+    }
+
+    public class JsonControllerBase : INeedTheListenerContext
+    {
+        public HttpListenerContext Context { get; set; }
+    }
+
+    public class JsonServiceHost<T> : IHostAJsonService
     {
         private readonly Uri _baseUri;
-        private readonly object _controller;
         private readonly bool _quiet;
         private readonly CancellationTokenSource _tokenSource;
         private readonly Task _task;
         private readonly HttpListener _listener;
         private readonly IDictionary<string, MethodInfo> _routes;
 
-        public JsonServiceHost(Uri baseUri, object controller, bool quiet = false)
+        public JsonServiceHost(string baseUrl, AuthenticationSchemes authentication = AuthenticationSchemes.Anonymous, bool quiet = false)
         {
-            _baseUri = baseUri;
+            _baseUri = new Uri(baseUrl);
             _tokenSource = new CancellationTokenSource();
             _task = new Task(Run, _tokenSource.Token, TaskCreationOptions.LongRunning);
             _listener = new HttpListener();
-            _listener.Prefixes.Add(baseUri.ToString());
-            _controller = controller;
+            _listener.Prefixes.Add(_baseUri.ToString());
+            _listener.AuthenticationSchemes = authentication;
             _quiet = quiet;
             _routes = new Dictionary<string, MethodInfo>();
 
-            foreach (MethodInfo methodInfo in _controller.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
+            foreach (MethodInfo methodInfo in typeof(T).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
                 ParameterInfo[] paramsInfo = methodInfo.GetParameters();
 
@@ -115,7 +130,12 @@ namespace SimpleJsonService
                         ? new object[] { } 
                         : new[] { Serializer.DeserializeObject(jsonBody, paramInfo.ParameterType) };
 
-                    object result = methodInfo.Invoke(_controller, args);
+                    object controller = ControllerFactory.MakeController();
+
+                    if (controller is INeedTheListenerContext controllerWithContext)
+                        controllerWithContext.Context = context;
+
+                    object result = methodInfo.Invoke(controller, args);
                     string jsonResult = null;
 
                     if (result != null)
@@ -135,6 +155,16 @@ namespace SimpleJsonService
                     context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
                 }
             }
+        }
+
+        public static class ControllerFactory
+        {
+            public static void Configure(Func<T> makeControllerFunc)
+            {
+                MakeController = makeControllerFunc;
+            }
+
+            public static Func<T> MakeController = Activator.CreateInstance<T>;
         }
 
         public static class Serializer
