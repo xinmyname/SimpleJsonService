@@ -7,6 +7,9 @@
     <RepositoryUrl>https://github.com/xinmyname/SimpleJsonService</RepositoryUrl>
     <Description>Very simple JSON REST API Service for HttpListener and .NET Standard 2.0</Description>
     <PackageLicenseUrl>https://raw.githubusercontent.com/xinmyname/SimpleJsonService/master/LICENSE</PackageLicenseUrl>
+    <AssemblyVersion>1.0.1.0</AssemblyVersion>
+    <FileVersion>1.0.1.0</FileVersion>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
 </Project>
