@@ -7,10 +7,10 @@
     <RepositoryUrl>https://github.com/xinmyname/SimpleJsonService</RepositoryUrl>
     <Description>Very simple JSON REST API Service for HttpListener and .NET Standard 2.0</Description>
     <PackageLicenseUrl>https://raw.githubusercontent.com/xinmyname/SimpleJsonService/master/LICENSE</PackageLicenseUrl>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
-    <Version>1.2</Version>
-    <PackageReleaseNotes>v1.2 Generic abstraction was too much! Now uses Type and generic static method for construction
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
+    <Version>1.2.1</Version>
+    <PackageReleaseNotes>v1.2.1 Nicer error handling on Windows when a URL reservation is missing
 </PackageReleaseNotes>
   </PropertyGroup>
 

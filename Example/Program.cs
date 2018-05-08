@@ -17,7 +17,7 @@ namespace Example
                 e.Cancel = true;
             };
 
-            var serviceHost = JsonServiceHost.Create<ExampleController>("http://localhost:38080/", AuthenticationSchemes.Negotiate);
+            var serviceHost = JsonServiceHost.Create<ExampleController>("http://localhost:38080/example/", AuthenticationSchemes.Negotiate);
 
             try
             {
@@ -27,6 +27,10 @@ namespace Example
             catch (OperationCanceledException)
             {
                 serviceHost.Stop();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"FATAL   {ex.Message}");
             }
         }
     }

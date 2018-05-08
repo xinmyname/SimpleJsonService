@@ -67,7 +67,36 @@ namespace SimpleJsonService
 
         public void Start()
         {
-            _listener.Start();
+            try
+            {
+                _listener.Start();
+            }
+            catch (HttpListenerException ex)
+            {
+                // If on Windows, and we get an access denied error, it's probably because we're missing a URL reservation for http.sys
+                if (ex.ErrorCode == 5 && Environment.OSVersion.Platform == PlatformID.Win32NT)
+                {
+                    string message = $"\nUnable to start listener on '{_baseUri}'. Ensure that the URL is reserved on this system.\n" + 
+                                     "\n" + 
+                                     $"    Example: netsh http add urlacl url={_baseUri.Scheme}://{_baseUri.Host}:{_baseUri.Port}{_baseUri.LocalPath} user=Everyone listen=yes\n\n";
+
+                    if (_baseUri.Scheme == "https")
+                    {
+                        message = $"{message}" +
+                                  $"Additionally, you must ensure that a certificate is bound to the port {_baseUri.Port}\n" +
+                                  "\n" +
+                                  $"    Example: netsh http add sslcert ipport=0.0.0.0:{_baseUri.Port} certhash=0123456789abcdef0123456789abcdef01234567 appid={{01234567-89ab-cdef-0123-456789abcdef}}\n" +
+                                  "\n" +
+                                  "'certhash' is the thumbprint of the certificate for this url.\n" +
+                                  $"'appid' can be any GUID, but using your application GUID would be best.\n\n";
+                    }
+
+                    throw new ApplicationException(message, ex);
+                }
+
+                throw;
+            }
+
             _task.Start();
 
             if (!_quiet)
