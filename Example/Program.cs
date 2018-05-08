@@ -17,7 +17,7 @@ namespace Example
                 e.Cancel = true;
             };
 
-            var serviceHost = new JsonServiceHost<ExampleController>("http://localhost:38080/", AuthenticationSchemes.Negotiate);
+            var serviceHost = JsonServiceHost.Create<ExampleController>("http://localhost:38080/", AuthenticationSchemes.Negotiate);
 
             try
             {

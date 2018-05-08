@@ -27,16 +27,17 @@ namespace SimpleJsonService
         public HttpListenerContext Context { get; set; }
     }
 
-    public class JsonServiceHost<T> : IHostAJsonService
+    public class JsonServiceHost : IHostAJsonService
     {
         private readonly Uri _baseUri;
+        private readonly Type _controllerType;
         private readonly bool _quiet;
         private readonly CancellationTokenSource _tokenSource;
         private readonly Task _task;
         private readonly HttpListener _listener;
         private readonly IDictionary<string, MethodInfo> _routes;
 
-        public JsonServiceHost(string baseUrl, AuthenticationSchemes authentication = AuthenticationSchemes.Anonymous, bool quiet = false)
+        public JsonServiceHost(Type controllerType, string baseUrl, AuthenticationSchemes authentication, bool quiet)
         {
             _baseUri = new Uri(baseUrl);
             _tokenSource = new CancellationTokenSource();
@@ -44,10 +45,11 @@ namespace SimpleJsonService
             _listener = new HttpListener();
             _listener.Prefixes.Add(_baseUri.ToString());
             _listener.AuthenticationSchemes = authentication;
+            _controllerType = controllerType;
             _quiet = quiet;
             _routes = new Dictionary<string, MethodInfo>();
 
-            foreach (MethodInfo methodInfo in typeof(T).GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
+            foreach (MethodInfo methodInfo in controllerType.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly))
             {
                 ParameterInfo[] paramsInfo = methodInfo.GetParameters();
 
@@ -56,6 +58,11 @@ namespace SimpleJsonService
 
                 _routes[methodInfo.Name.ToLower()] = methodInfo;
             }
+        }
+
+        public static IHostAJsonService Create<T>(string baseUrl, AuthenticationSchemes authentication = AuthenticationSchemes.Anonymous, bool quiet = false)
+        {
+            return new JsonServiceHost(typeof(T), baseUrl, authentication, quiet);
         }
 
         public void Start()
@@ -130,7 +137,7 @@ namespace SimpleJsonService
                         ? new object[] { } 
                         : new[] { Serializer.DeserializeObject(jsonBody, paramInfo.ParameterType) };
 
-                    object controller = ControllerFactory.MakeController();
+                    object controller = ControllerFactory.CreateController(_controllerType);
 
                     if (controller is INeedTheListenerContext controllerWithContext)
                         controllerWithContext.Context = context;
@@ -159,12 +166,12 @@ namespace SimpleJsonService
 
         public static class ControllerFactory
         {
-            public static void Configure(Func<T> makeControllerFunc)
+            public static void Configure(Func<Type, object> createControllerFunc)
             {
-                MakeController = makeControllerFunc;
+                CreateController = createControllerFunc;
             }
 
-            public static Func<T> MakeController = Activator.CreateInstance<T>;
+            public static Func<Type,object> CreateController = Activator.CreateInstance;
         }
 
         public static class Serializer
